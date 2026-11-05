@@ -81,6 +81,7 @@ the best of them shared.
 | command | job | what it does |
 | --- | --- | --- |
 | `/trader-regime` | Market-Type Brain | Works out whether the market is in a crash, bear, neutral, bull or euphoria phase from past data only, and shrinks or blocks new buys to match. |
+| `/trader-validate` | The Gauntlet | Walk-forward tests on up to 15 years of daily data with five pass/fail filters and three baselines; only what passes gets traded automatically. |
 
 `/trader-risk` also gained account circuit breakers (2% day: half size, 3%
 day: no new entries, 5% week: half size, 10% from peak: halt until you delete
