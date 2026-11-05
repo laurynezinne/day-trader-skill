@@ -147,6 +147,37 @@ reward:risk 0.44. At 9:40 they are blocked by the window (no new entries
 before 9:45). The 3:55 PM sell that closes the position passes, even though
 it is after the 3:30 entry cutoff: it is an exit.
 
+## Circuit breakers (the whole account)
+
+The checks above keep each trade small. The breakers watch the account as a
+whole, from an equity log (`trader/state/equity.json`) that
+`breakers.py record --equity <account value>` appends to:
+
+| breaker | trips when | what happens |
+| --- | --- | --- |
+| day halve | down `breaker_day_halve_pct` (2%) since yesterday's last value | max loss per trade cut in half |
+| day stop | down `breaker_day_stop_pct` (3%) since yesterday | every new entry blocked today; the report says flatten |
+| week halve | down `breaker_week_halve_pct` (5%) since the last value before this week | max loss per trade cut in half |
+| peak halt | down `breaker_peak_halt_pct` (10%) from the highest value logged | writes `trader/state/HALTED`; every entry blocked until a person deletes that file |
+
+`check.py` reads the log and the lock file on every run (`--no-breakers` skips
+them). `python3 ${CLAUDE_SKILL_DIR}/breakers.py status` shows where the account
+stands. Set a percent to 0 to switch that breaker off. Exits are never blocked.
+Never delete `HALTED` on the user's behalf: the point is that a person looks
+first.
+
+## Correlation check
+
+Three stocks that move together are one big bet. Before a buy passes, its
+daily returns are compared with every stock held (and every buy passed earlier
+in the batch). At or over `max_correlation` (0.8) over the last
+`correlation_days` (60) it is blocked. Refresh the data with
+`python3 ${CLAUDE_SKILL_DIR}/correlation.py fetch <SYMBOLS>`; see the grid with
+`correlation.py show <SYMBOLS>`. Too little history gives a warning, not a block.
+
+`"auto": true` in the config is only allowed with `"paper": true`: check.py
+refuses to run otherwise.
+
 ## Rules
 
 - A PASS only means the order is allowed to be shown to the user. It is not a yes.

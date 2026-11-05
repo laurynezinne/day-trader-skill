@@ -23,8 +23,10 @@ CONTRACT_CFG = {
     "max_loss_per_trade_usd": 50, "max_daily_loss_usd": 150, "max_trades_per_day": 3, "max_orders_per_day": 10,
     "min_reward_risk": 1.0, "require_stop": True,
     "no_entries_before": "09:45", "no_entries_after": "15:30", "flat_by": "15:55",
-    "fractional": False, "broker": "alpaca", "paper": True, "blocked": [],
+    "fractional": False, "broker": "alpaca", "paper": True, "auto": False, "blocked": [],
     "allow_options": False, "allow_margin": False, "allow_short": False, "pdt_guard": False,
+    "breaker_day_halve_pct": 2, "breaker_day_stop_pct": 3, "breaker_week_halve_pct": 5,
+    "breaker_peak_halt_pct": 10, "max_correlation": 0.8, "correlation_days": 60,
     "sec_user_agent": "Your Name you@example.com",
 }
 # v1's rules, for the weights mode tests
