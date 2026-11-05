@@ -67,6 +67,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import breakers  # noqa: E402  (trader-risk/breakers.py)
+
 DEFAULTS = {
     "budget": None, "cash_buffer_pct": 10, "max_position_pct": 75, "max_order_usd": 4000,
     "min_order_usd": 5, "max_loss_per_trade_usd": 50, "max_daily_loss_usd": 150, "max_trades_per_day": 3,
@@ -370,13 +373,23 @@ def day_trades(state, today):
 
 # ---------------------------------------------------------------- the check
 
-def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=None, price_times=None):
+def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=None, price_times=None,
+          breakers=None):
     """Pure function. Returns {"results": [...], "pass": n, "block": n, "warnings": [...]}.
 
     now          naive UTC (default: the real clock); its New York date is "today"
-    price_times  {SYM: naive UTC time of that price}; None = every price counts as fresh"""
+    price_times  {SYM: naive UTC time of that price}; None = every price counts as fresh
+    breakers     breakers.evaluate(...)'s result; None = no account breakers"""
     c = dict(DEFAULTS)
     c.update(cfg or {})
+    if c.get("auto") and not c.get("paper", True):
+        raise RiskError("\"auto\": true only runs on a paper account. Set \"paper\": true, or turn auto off "
+                        "and approve every live order yourself")
+    brk = breakers or {"level": "ok", "factor": 1.0, "reasons": []}
+    brk_factor = _f(brk.get("factor"))
+    brk_factor = 1.0 if brk_factor is None else brk_factor
+    if brk.get("level") == "halve" and _f(c.get("max_loss_per_trade_usd")):
+        c["max_loss_per_trade_usd"] = round(_f(c["max_loss_per_trade_usd"]) * brk_factor, 2)
     prices = {str(k).upper(): float(v) for k, v in (prices or {}).items() if _f(v)}
     now_utc = now or parse_now(None)
     now_et = to_eastern(now_utc)
@@ -402,6 +415,10 @@ def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=
     batch_entries, batch_loss = 0, 0.0
     if not c.get("paper", True):
         top_warn.append("LIVE account (\"paper\": false): these orders use real money")
+    if brk.get("level") == "halve":
+        top_warn.extend("breaker: " + x for x in brk.get("reasons") or [])
+    if brk.get("flatten"):
+        top_warn.append("breaker: flatten every open position (trader-broker: ticket.py flatten)")
     top_warn.extend(win_warns)
 
     def fresh(sym):
@@ -624,6 +641,8 @@ def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=
                 later.append("trades: %d entries placed today plus %d passed earlier in this batch, your limit "
                              "is %d a day" % (len(entries_today), batch_entries, cap_t))
             later.extend(win_reasons)
+            if brk.get("level") in ("stop", "halt"):
+                later.extend("breaker: " + x for x in brk.get("reasons") or [])
             if c.get("pdt_guard") and pdt_n >= 3:
                 later.append("pdt: %d day trades in the last 5 business days (%s); a 4th trips the "
                              "pattern-day-trader rule your broker applies (\"pdt_guard\": true)"
@@ -702,6 +721,9 @@ def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=
         "cash_after": round(acct["cash"], 2),
         "today": {"orders_placed": count_today, "entries_placed": len(entries_today),
                   "loss_at_risk": round(loss_today, 2), "day_trades_5d": pdt_n if c.get("pdt_guard") else None},
+        "breakers": {"level": brk.get("level", "ok"), "factor": brk_factor,
+                     "flatten": bool(brk.get("flatten")), "numbers": brk.get("numbers") or {}},
+        "auto": bool(c.get("auto")),
     }
 
 
@@ -777,6 +799,9 @@ def main(argv=None):
     ap.add_argument("--today", help="YYYY-MM-DD (default: today in New York)")
     ap.add_argument("--out", default="trader/state/risk.json", help="where the verdicts are recorded")
     ap.add_argument("--no-write", action="store_true", help="do not record the verdicts")
+    ap.add_argument("--equity", default=breakers.EQUITY_PATH, help="equity log for the circuit breakers")
+    ap.add_argument("--halt-file", default=breakers.HALT_PATH, help="the lock file a halt writes")
+    ap.add_argument("--no-breakers", action="store_true", help="skip the account circuit breakers")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     try:
@@ -792,7 +817,13 @@ def main(argv=None):
         pdoc = read_json(a.prices, "prices", required=False) or {}
         prices, times = load_prices(pdoc)
         state = read_json(a.state, "broker state", required=False)
-        res = check(orders, cfg, portfolio, prices, state, a.today, now, times)
+        brk = None
+        if not a.no_breakers:
+            today = a.today or to_eastern(now).date().isoformat()
+            brk = breakers.evaluate(breakers.read_doc(a.equity), today, cfg, breakers.read_halt(a.halt_file))
+            if brk["trip_halt"] and not a.no_write:
+                breakers.write_halt(brk["reasons"][0], a.halt_file)
+        res = check(orders, cfg, portfolio, prices, state, a.today, now, times, brk)
         if pdoc.get("as_of"):
             res["prices_as_of"] = pdoc["as_of"]
         if not a.no_write:
