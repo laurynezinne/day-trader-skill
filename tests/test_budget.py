@@ -26,7 +26,7 @@ CONTRACT_CFG = {
     "fractional": False, "broker": "alpaca", "paper": True, "auto": False, "blocked": [],
     "allow_options": False, "allow_margin": False, "allow_short": False, "pdt_guard": False,
     "breaker_day_halve_pct": 2, "breaker_day_stop_pct": 3, "breaker_week_halve_pct": 5,
-    "breaker_peak_halt_pct": 10,
+    "breaker_peak_halt_pct": 10, "max_correlation": 0.8, "correlation_days": 60,
     "sec_user_agent": "Your Name you@example.com",
 }
 # v1's rules, for the weights mode tests

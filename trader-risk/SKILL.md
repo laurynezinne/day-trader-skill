@@ -166,6 +166,15 @@ stands. Set a percent to 0 to switch that breaker off. Exits are never blocked.
 Never delete `HALTED` on the user's behalf: the point is that a person looks
 first.
 
+## Correlation check
+
+Three stocks that move together are one big bet. Before a buy passes, its
+daily returns are compared with every stock held (and every buy passed earlier
+in the batch). At or over `max_correlation` (0.8) over the last
+`correlation_days` (60) it is blocked. Refresh the data with
+`python3 ${CLAUDE_SKILL_DIR}/correlation.py fetch <SYMBOLS>`; see the grid with
+`correlation.py show <SYMBOLS>`. Too little history gives a warning, not a block.
+
 `"auto": true` in the config is only allowed with `"paper": true`: check.py
 refuses to run otherwise.
 
