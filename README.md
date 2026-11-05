@@ -82,11 +82,18 @@ the best of them shared.
 | --- | --- | --- |
 | `/trader-regime` | Market-Type Brain | Works out whether the market is in a crash, bear, neutral, bull or euphoria phase from past data only, and shrinks or blocks new buys to match. |
 | `/trader-validate` | The Gauntlet | Walk-forward tests on up to 15 years of daily data with five pass/fail filters and three baselines; only what passes gets traded automatically. |
+| `/trader-auto` | Auto Paper Runner | Once a day it runs the validated strategy, sells what no longer qualifies and sends bracket entries trader-risk passed. Paper only, hard-coded; a journal of every run. |
 
 `/trader-risk` also gained account circuit breakers (2% day: half size, 3%
 day: no new entries, 5% week: half size, 10% from peak: halt until you delete
 `trader/state/HALTED`) and a correlation check (no two holdings that move
 together at r >= 0.8).
+
+The automatic path, once a day at 20:20 UK (`trader-auto/daily.sh`):
+
+```
+regime (market type) -> validate (monthly) -> auto: breakers -> signals -> exits -> entries -> risk -> paper orders -> journal
+```
 
 ## How to use it
 
