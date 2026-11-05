@@ -73,6 +73,20 @@ or in the `SEC_USER_AGENT` environment variable.
 | `/trader-analyst` | Earnings Analyst | Reads earnings reports and sums up what changed. |
 | `/trader-pelosi` | Pelosi Tracker | Reads Congress's stock-trade disclosures the minute they are filed. |
 
+## Upgrades in this fork
+
+Built from studying 27 "Claude trading" videos: the safety and testing pieces
+the best of them shared.
+
+| command | job | what it does |
+| --- | --- | --- |
+| `/trader-regime` | Market-Type Brain | Works out whether the market is in a crash, bear, neutral, bull or euphoria phase from past data only, and shrinks or blocks new buys to match. |
+
+`/trader-risk` also gained account circuit breakers (2% day: half size, 3%
+day: no new entries, 5% week: half size, 10% from peak: halt until you delete
+`trader/state/HALTED`) and a correlation check (no two holdings that move
+together at r >= 0.8).
+
 ## How to use it
 
 Everything lands in a `trader/` folder in your project, and each skill reads

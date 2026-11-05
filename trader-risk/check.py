@@ -375,13 +375,14 @@ def day_trades(state, today):
 # ---------------------------------------------------------------- the check
 
 def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=None, price_times=None,
-          breakers=None, closes=None):
+          breakers=None, closes=None, regime=None):
     """Pure function. Returns {"results": [...], "pass": n, "block": n, "warnings": [...]}.
 
     now          naive UTC (default: the real clock); its New York date is "today"
     price_times  {SYM: naive UTC time of that price}; None = every price counts as fresh
     breakers     breakers.evaluate(...)'s result; None = no account breakers
-    closes       {SYM: [[date, close], ...]} daily closes for the correlation check; None = skip it"""
+    closes       {SYM: [[date, close], ...]} daily closes for the correlation check; None = skip it
+    regime       trader-regime's verdict ({"regime", "factor", "date"}); None = no market-type sizing"""
     c = dict(DEFAULTS)
     c.update(cfg or {})
     if c.get("auto") and not c.get("paper", True):
@@ -393,6 +394,11 @@ def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=
     brk_factor = 1.0 if brk_factor is None else brk_factor
     if brk.get("level") == "halve" and _f(c.get("max_loss_per_trade_usd")):
         c["max_loss_per_trade_usd"] = round(_f(c["max_loss_per_trade_usd"]) * brk_factor, 2)
+    reg = regime if isinstance(regime, dict) and regime.get("regime") else None
+    reg_factor = _f(reg.get("factor")) if reg else None
+    reg_factor = 1.0 if reg_factor is None else max(0.0, min(1.0, reg_factor))
+    if reg and 0 < reg_factor < 1 and _f(c.get("max_loss_per_trade_usd")):
+        c["max_loss_per_trade_usd"] = round(_f(c["max_loss_per_trade_usd"]) * reg_factor, 2)
     prices = {str(k).upper(): float(v) for k, v in (prices or {}).items() if _f(v)}
     now_utc = now or parse_now(None)
     now_et = to_eastern(now_utc)
@@ -420,6 +426,9 @@ def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=
         top_warn.append("LIVE account (\"paper\": false): these orders use real money")
     if brk.get("level") == "halve":
         top_warn.extend("breaker: " + x for x in brk.get("reasons") or [])
+    if reg and 0 < reg_factor < 1:
+        top_warn.append("regime: the market type is %s (as of %s): max loss per trade x %s"
+                        % (reg["regime"], reg.get("date", "?"), _num(reg_factor)))
     if brk.get("flatten"):
         top_warn.append("breaker: flatten every open position (trader-broker: ticket.py flatten)")
     top_warn.extend(win_warns)
@@ -646,6 +655,9 @@ def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=
             later.extend(win_reasons)
             if brk.get("level") in ("stop", "halt"):
                 later.extend("breaker: " + x for x in brk.get("reasons") or [])
+            if reg and reg_factor <= 0 and side == "buy":
+                later.append("regime: the market type is %s (as of %s): no new buys until it changes"
+                             % (reg["regime"], reg.get("date", "?")))
             if closes is not None and side == "buy" and sym:
                 others = sorted(s for s, n in acct["shares"].items() if n > 1e-9 and s != sym)
                 cblocks, cwarns = correlation.conflicts(sym, others, closes, c)
@@ -736,6 +748,7 @@ def check(orders, cfg, portfolio=None, prices=None, state=None, today=None, now=
         "breakers": {"level": brk.get("level", "ok"), "factor": brk_factor,
                      "flatten": bool(brk.get("flatten")), "numbers": brk.get("numbers") or {}},
         "auto": bool(c.get("auto")),
+        "regime": {"regime": reg["regime"], "factor": reg_factor, "date": reg.get("date")} if reg else None,
     }
 
 
@@ -816,6 +829,8 @@ def main(argv=None):
     ap.add_argument("--no-breakers", action="store_true", help="skip the account circuit breakers")
     ap.add_argument("--closes", default=correlation.CLOSES_PATH, help="daily closes for the correlation check")
     ap.add_argument("--no-correlation", action="store_true", help="skip the correlation check")
+    ap.add_argument("--regime", default="trader/state/regime.json", help="trader-regime's market type")
+    ap.add_argument("--no-regime", action="store_true", help="skip market-type sizing")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     try:
@@ -838,7 +853,20 @@ def main(argv=None):
             if brk["trip_halt"] and not a.no_write:
                 breakers.write_halt(brk["reasons"][0], a.halt_file)
         closes = None if a.no_correlation else correlation.read_closes(a.closes)
-        res = check(orders, cfg, portfolio, prices, state, a.today, now, times, brk, closes)
+        reg = None
+        if not a.no_regime and os.path.exists(a.regime):
+            reg = read_json(a.regime, "market type", required=False)
+            age = None
+            try:
+                ref = datetime.date.fromisoformat(a.today or to_eastern(now).date().isoformat())
+                age = (ref - datetime.date.fromisoformat(str(reg.get("date"))[:10])).days
+            except (TypeError, ValueError, AttributeError):
+                pass
+            if age is None or age > 4:
+                print("check.py: %s is %s old; refresh it with trader-regime (regime.py now). Ignoring it."
+                      % (a.regime, "?" if age is None else "%d days" % age), file=sys.stderr)
+                reg = None
+        res = check(orders, cfg, portfolio, prices, state, a.today, now, times, brk, closes, reg)
         if pdoc.get("as_of"):
             res["prices_as_of"] = pdoc["as_of"]
         if not a.no_write:
