@@ -38,6 +38,8 @@ daily history (adjusted for splits and dividends): unofficial, can lag.
 | --- | --- | --- | --- |
 | `rsi_reversion` | RSI(2) closes under 5, 10 or 15 while the close is above the 200-day average | close above the 5- or 10-day average | 6 |
 | `sma_trend` | close above its 50-, 100- or 200-day average | close back under it | 3 |
+| `ema_pullback` | 50 EMA above the 200 and the close pulls back to within 0.5, 1 or 2% of the 50 | close below the 200 EMA | 3 |
+| `ema_trend` | close above its 100- or 200-day EMA | close back under it | 2 |
 
 Both are long only. A position is decided at the close and earns the NEXT
 day's move, so no day ever uses its own close twice. Each change of position
@@ -70,6 +72,10 @@ its benefit is then a smaller drawdown, not a bigger return.
 - `rsi_reversion`: 5 of 20 passed (SPY, MSFT, NVDA, GOOGL, V). Drawdowns were
   far smaller than holding (SPY 14.5%), but no pass beat buy-and-hold's Sharpe.
 - `sma_trend`: 6 of 20 passed (SPY, QQQ, DIA, AAPL, JPM, HD).
+- `ema_pullback` (the "EMA 50 & 200" post, long side, daily bars): 6 of 20
+  passed (SPY, QQQ, DIA, GOOGL, JPM, V), plus gold (GLD); silver and oil
+  failed. Win rates were 14-42%: it makes money from a few long holds, not
+  from winning often. No pass beat buy-and-hold's Sharpe.
 
 Re-run monthly: a pass is a result about the past, not a promise.
 

@@ -20,6 +20,10 @@ Strategies:
                  average. (Mean reversion: the one family that held up on
                  average across 9,000 backtests.)
   sma_trend      hold while the close is above its N-day average.
+  ema_pullback   the "EMA 50 & 200" post, long side: with the 50 EMA above the
+                 200, buy a close that pulls back to within 0.5-2% of the 50;
+                 quit on a close below the 200.
+  ema_trend      hold while the close is above its 100- or 200-day EMA.
 
     python3 validate.py run SPY QQQ AAPL MSFT --strategy rsi_reversion
     python3 validate.py run --universe default --json
@@ -53,6 +57,8 @@ DEFAULT_UNIVERSE = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "NVDA", "AMZN", 
 GRIDS = {
     "rsi_reversion": [{"rsi_buy": b, "exit_sma": e} for b in (5, 10, 15) for e in (5, 10)],
     "sma_trend": [{"sma": n} for n in (50, 100, 200)],
+    "ema_pullback": [{"pull_pct": p} for p in (0.5, 1.0, 2.0)],
+    "ema_trend": [{"ema": n} for n in (100, 200)],
 }
 
 
@@ -70,6 +76,15 @@ def sma(xs, n):
             s -= xs[i - n]
         if i >= n - 1:
             out[i] = s / n
+    return out
+
+
+def ema(xs, n):
+    out, k, e = [None] * len(xs), 2.0 / (n + 1), None
+    for i, x in enumerate(xs):
+        e = x if e is None else x * k + e * (1 - k)
+        if i >= n - 1:
+            out[i] = e
     return out
 
 
@@ -108,6 +123,23 @@ def positions(closes, strategy, p):
         s = sma(closes, p["sma"])
         for i in range(n):
             pos[i] = 1 if s[i] is not None and closes[i] > s[i] else 0
+    elif strategy == "ema_pullback":
+        # the EMA 50/200 post, long side: 50 above 200, buy a pullback to the 50, quit on a close under the 200
+        e50, e200 = ema(closes, 50), ema(closes, 200)
+        held = 0
+        for i in range(n):
+            if e200[i] is None:
+                continue
+            if held:
+                if closes[i] < e200[i]:
+                    held = 0
+            elif e50[i] > e200[i] and e200[i] < closes[i] <= e50[i] * (1 + p["pull_pct"] / 100.0):
+                held = 1
+            pos[i] = held
+    elif strategy == "ema_trend":
+        e = ema(closes, p["ema"])
+        for i in range(n):
+            pos[i] = 1 if e[i] is not None and closes[i] > e[i] else 0
     elif strategy == "buy_hold":
         pos = [1] * n
     else:

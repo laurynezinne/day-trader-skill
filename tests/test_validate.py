@@ -39,6 +39,21 @@ class Indicators(unittest.TestCase):
         self.assertAlmostEqual(down[-1], 0.0)
 
 
+class Ema(unittest.TestCase):
+    def test_ema_flat_and_lagging(self):
+        self.assertAlmostEqual(v.ema([5.0] * 10, 3)[-1], 5.0)
+        e = v.ema([float(i) for i in range(30)], 10)
+        self.assertIsNone(e[8])
+        self.assertLess(e[-1], 29)          # an EMA trails a rising price
+
+    def test_ema_strategies_run_the_gauntlet(self):
+        n = 252 * 6
+        for strat in ("ema_pullback", "ema_trend"):
+            res = v.gauntlet(bdays(n), walk(n, 0.0004, 0.01, seed=5, revert=0.05), strat, "SYN")
+            self.assertIn(res["verdict"], ("PASS", "FAIL"))
+            self.assertIn(res["current_settings"], v.GRIDS[strat])
+
+
 class NoLookAhead(unittest.TestCase):
     def test_todays_position_earns_tomorrow(self):
         closes = [100, 110, 121, 133.1]
