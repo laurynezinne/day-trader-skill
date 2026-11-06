@@ -1,0 +1,408 @@
+<title>Bot HQ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a night-shift trading floor. Status strip, the agents' desks, then the desk's evidence: markets, calendar, curve, leaderboard, log. */
+:root {
+  --floor: #0d0b1f;          /* page */
+  --wall: #15122e;           /* panels */
+  --wall-2: #1d1940;         /* raised */
+  --line: #2e2a5c;
+  --ink: #ecebff;
+  --ink-2: #a9a6d6;
+  --ink-3: #6f6ba3;
+  --glow: #7cf0ff;           /* the one accent: monitor light */
+  --win: #3ee08f;
+  --loss: #ff5d7a;
+  --warn: #ffc94d;
+  --display: "Pixelify Sans", "Courier New", monospace;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+html, body { background: var(--floor); color: var(--ink); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); font-weight: 700; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+h1 { font-size: clamp(30px, 6vw, 46px); line-height: 1; }
+h2 { font-size: 22px; }
+.sub { color: var(--ink-2); margin: 4px 0 0; max-width: 68ch; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.win { color: var(--win); } .loss { color: var(--loss); }
+.sec { display: grid; gap: 12px; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.note { font-size: 13px; color: var(--ink-3); margin: 0; max-width: 75ch; }
+.panel { background: var(--wall); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+
+/* header */
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px; }
+.brand small { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--glow); margin-bottom: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--mono); font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); background: var(--wall); white-space: nowrap; }
+.chip b { color: var(--ink); font-weight: 500; }
+.chip.live { border-color: var(--win); color: var(--win); }
+.chip.live::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--win); margin-right: 6px; vertical-align: 1px; animation: pulse 1.6s infinite; }
+.chip.bench { border-color: var(--warn); color: var(--warn); }
+@keyframes pulse { 50% { opacity: .25; } }
+
+/* KPI strip */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+.kpi { background: var(--wall); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 2px; align-content: start; }
+.kpi .k { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; }
+.kpi .v { font-family: var(--mono); font-size: 26px; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.kpi .d { font-size: 13px; color: var(--ink-2); }
+.kpi.hero { border-color: var(--glow); box-shadow: 0 0 0 1px rgba(124,240,255,.15), 0 0 28px -8px rgba(124,240,255,.45); }
+
+/* the floor */
+.floor { background:
+    linear-gradient(transparent 31px, rgba(124,240,255,.05) 32px) 0 0 / 100% 32px,
+    linear-gradient(90deg, transparent 31px, rgba(124,240,255,.05) 32px) 0 0 / 32px 100%,
+    var(--wall);
+  border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 14px; }
+.desk { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 10px 8px 12px; border-radius: 10px; background: rgba(13,11,31,.55); border: 1px solid var(--line); min-width: 0; }
+.desk canvas { width: 96px; height: 96px; image-rendering: pixelated; }
+.desk .who { font-family: var(--display); font-size: 17px; padding: 1px 10px; border-radius: 6px; color: var(--floor); }
+.desk .job { font-size: 12px; color: var(--ink-3); }
+.desk .say { font-family: var(--mono); font-size: 12px; color: var(--ink); background: var(--wall-2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; min-height: 3.4em; text-align: left; overflow-wrap: anywhere; }
+
+/* markets */
+.mk-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font-weight: 500; font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 10px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+td.r, th.r { text-align: right; }
+td .nm { font-weight: 600; } td .sy { display: block; font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.meter { position: relative; width: 150px; height: 10px; background: var(--wall-2); border-radius: 5px; overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; border-radius: 5px; }
+.meter::after { content: ""; position: absolute; left: 70%; top: -2px; bottom: -2px; width: 2px; background: var(--ink); opacity: .7; }
+.pill { display: inline-block; font-family: var(--mono); font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 1px solid currentColor; }
+.pill.hold { color: var(--win); } .pill.out { color: var(--ink-3); } .pill.veto { color: var(--loss); } .pill.wait { color: var(--warn); }
+
+/* calendar */
+.cal-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: inherit; font-family: var(--mono); font-size: 13px; color: var(--ink); background: var(--wall-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--glow); }
+button:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+button[aria-pressed="true"] { border-color: var(--glow); color: var(--glow); }
+.cal-title { font-family: var(--display); font-size: 20px; min-width: 11ch; text-align: center; }
+.cal-total { font-family: var(--mono); margin-left: auto; color: var(--ink-2); }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.cal .dow { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; text-align: center; }
+.cell { min-height: 68px; border-radius: 8px; padding: 6px 7px; background: var(--wall-2); border: 1px solid var(--line); display: grid; align-content: space-between; gap: 2px; min-width: 0; }
+.cell .dn { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+.cell .pn { font-family: var(--mono); font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.cell .tc { font-size: 10px; color: var(--ink-2); }
+.cell.up { background: rgba(62,224,143,.16); border-color: rgba(62,224,143,.55); }
+.cell.dn-day { background: rgba(255,93,122,.14); border-color: rgba(255,93,122,.5); }
+.cell.blank { background: transparent; border-color: transparent; }
+@media (max-width: 560px) { .cell { min-height: 52px; padding: 4px; } .cell .tc { display: none; } .cell .pn { font-size: 11px; } }
+
+/* chart */
+.chart svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: 4px; background: var(--c); }
+.years { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; }
+.yr { background: var(--wall-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: grid; gap: 2px; }
+.yr b { font-family: var(--display); font-size: 16px; }
+.yr span { font-family: var(--mono); font-size: 12px; }
+
+/* leaderboard */
+.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.strat { background: var(--wall); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.strat.on { border-color: var(--win); }
+.strat.off { border-color: rgba(255,201,77,.6); }
+.strat header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.strat h3 { font-family: var(--display); font-size: 20px; margin: 0; }
+.strat p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.strat dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 0; font-size: 14px; }
+.strat dt { color: var(--ink-3); } .strat dd { margin: 0; font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+
+details { color: var(--ink-2); font-size: 14px; }
+details summary { cursor: pointer; color: var(--ink); font-weight: 500; }
+details ul { margin: 8px 0 0; padding-left: 20px; max-width: 80ch; display: grid; gap: 4px; }
+@media (prefers-reduced-motion: reduce) { .chip.live::before { animation: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <small>Paper trading · five markets · six agents</small>
+      <h1>Bot HQ</h1>
+      <p class="sub" id="lede"></p>
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <section class="kpis" id="kpis" aria-label="Headline numbers"></section>
+
+  <section class="sec" aria-labelledby="floor-h">
+    <div class="sec-head"><h2 id="floor-h">The floor</h2><p class="note" id="floor-note"></p></div>
+    <div class="floor" id="floor"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="mk-h">
+    <div class="sec-head"><h2 id="mk-h">Markets right now</h2><p class="note">Trend score: 40 for a close above the 200 EMA, 30 for the 50 EMA above the 200, up to 29 for Aroon strength. The white tick is 70: at or over it, the Trend Rider holds.</p></div>
+    <div class="panel mk-wrap"><table id="mk"></table></div>
+  </section>
+
+  <section class="sec" aria-labelledby="cal-h">
+    <div class="sec-head"><h2 id="cal-h">P&amp;L calendar</h2><p class="note">Each day's profit or loss on a $10,000 start. Green made money, red lost it; the small number counts trades closed that day.</p></div>
+    <div class="panel sec">
+      <div class="cal-bar">
+        <button id="src-bt" aria-pressed="true">Backtest</button>
+        <button id="src-pp" aria-pressed="false">Paper account</button>
+        <button id="prev" aria-label="Previous month">◀</button>
+        <div class="cal-title" id="cal-title"></div>
+        <button id="next" aria-label="Next month">▶</button>
+        <div class="cal-total" id="cal-total"></div>
+      </div>
+      <div class="cal" id="cal"></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="eq-h">
+    <div class="sec-head"><h2 id="eq-h">Growth of $10,000</h2>
+      <div class="cal-bar"><button id="sc-log" aria-pressed="true">Log scale</button><button id="sc-lin" aria-pressed="false">Linear</button></div></div>
+    <div class="panel sec chart">
+      <div class="legend"><span style="--c: var(--glow)">Trend Rider</span><span style="--c: var(--ink-3)">Holding all five, rebalanced daily</span></div>
+      <div id="eq"></div>
+      <div class="years" id="years"></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="lb-h">
+    <div class="sec-head"><h2 id="lb-h">Strategies tested</h2><p class="note">The Skeptic only lets a desk trade when its backtest made money after fees.</p></div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="tr-h">
+    <div class="sec-head"><h2 id="tr-h">Trade log</h2><p class="note">The Trend Rider's last 25 closed trades in the backtest.</p></div>
+    <div class="panel mk-wrap"><table id="trades"></table></div>
+  </section>
+
+  <details>
+    <summary>How the bot works, and what this page is not</summary>
+    <ul id="rules"></ul>
+  </details>
+</div>
+
+<script>
+const D = /*DATA*/null;
+
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const usd = (v, dp) => { const a = Math.abs(v); const d = dp != null ? dp : a >= 1000 ? 0 : a >= 1 ? 2 : 4; return (v < 0 ? "−$" : "$") + a.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); };
+const pct = (v, dp = 1) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(dp) + "%";
+const sgnUsd = (v) => (v > 0 ? "+" : "") + usd(v, Math.abs(v) >= 100 ? 0 : 2);
+const cls = (v) => (v > 0 ? "win" : v < 0 ? "loss" : "");
+const fmtDate = (s) => new Date(s + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const NAMES = Object.fromEntries(D.markets.map((m) => [m.symbol, m.name]));
+
+const T = D.trend, TS = T.stats, P = D.paper, S = D.scalper.stats;
+const holds = D.trend_now.filter((r) => r.weight > 0);
+const cashPct = 100 - holds.reduce((a, r) => a + r.weight * 100, 0);
+
+/* header */
+$("lede").textContent = `Six agents run two strategy desks on Bitcoin, the Nasdaq 100, the S&P 500, gold and oil. The Trend Rider trades on paper; the Scalper from the videos sits on the bench after losing ${pct(S.return_pct, 0).replace("−", "")} in its backtest.`;
+[["live", "Trend Rider <b>live on paper</b>"], ["bench", "Scalper <b>benched</b>"], ["", `Updated <b>${new Date(D.written).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" })}</b> UK`]]
+  .forEach(([c, h]) => { const s = el("span", "chip " + c); s.innerHTML = h; $("chips").appendChild(s); });
+
+/* KPIs */
+const kpi = (k, v, d, extra = "", vcls = "") => { const b = el("div", "kpi " + extra); b.append(el("div", "k", k)); const vv = el("div", "v " + vcls, v); b.append(vv, el("div", "d", d)); $("kpis").appendChild(b); };
+kpi("Paper account", usd(P.equity, 2), `${pct(P.return_pct, 2)} since ${fmtDate(P.since)} · ${P.open.length} open`, "hero", cls(P.return_pct));
+kpi("Backtest since " + TS.from.slice(0, 4), pct(TS.return_pct, 0), `Holding all five: ${pct(TS.hold_return_pct, 0)}`, "", cls(TS.return_pct));
+kpi("Worst drop", "−" + TS.max_drawdown_pct.toFixed(1) + "%", `Holding all five: −${TS.hold_max_drawdown_pct.toFixed(1)}%`);
+kpi("Winning trades", TS.win_rate_pct.toFixed(0) + "%", `Avg win ${usd(TS.avg_win, 0)} vs avg loss ${usd(-TS.avg_loss, 0)}`);
+kpi("Profit factor", TS.profit_factor.toFixed(2), `$${TS.profit_factor.toFixed(2)} made for every $1 lost, ${TS.trades} trades`);
+
+/* the floor: pixel agents */
+const SPRITE = [
+  "....hhhh....",
+  "...hhhhhh...",
+  "...hssssh...",
+  "...sesses...",
+  "...ssssss...",
+  "....ssss....",
+  "..cccccccc..",
+  ".cccccccccc.",
+  "mmmmmmmm.cc.",
+  "mggggggm.cc.",
+  "mggggggm....",
+  "dddddddddddd",
+];
+function drawAgent(canvas, shirt, hair, skin, frame) {
+  const k = 8, ctx = canvas.getContext("2d");
+  canvas.width = 12 * k; canvas.height = 12 * k;
+  const pal = { h: hair, s: skin, e: "#14112b", c: shirt, m: "#3b3670", g: frame ? "#7cf0ff" : "#4fb8c9", d: "#5a4a8a" };
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  SPRITE.forEach((row, y) => [...row].forEach((ch, x) => { if (pal[ch]) { ctx.fillStyle = pal[ch]; ctx.fillRect(x * k, y * k, k, k); } }));
+}
+const ranked = [...D.trend_now].sort((a, b) => (b.score || 0) - (a.score || 0));
+const vetoed = D.scalper_now.filter((r) => r.veto.length);
+const AGENTS = [
+  { who: "Scout", job: "Reads every chart", c: "#7cf0ff", h: "#2b1d0e", s: "#c68a5b",
+    say: `Read ${D.markets.length} markets. Last close ${fmtDate(D.trend_now.find((r) => r.symbol === "SPY").date)}.` },
+  { who: "Scorer", job: "Scores 0 to 100", c: "#b892ff", h: "#111", s: "#8d5a3b",
+    say: ranked.map((r) => `${r.name.split(" ")[0]} ${Math.round(r.score)}`).join(" · ") },
+  { who: "Skeptic", job: "Says no", c: "#ffc94d", h: "#6b3b1f", s: "#e0b088",
+    say: `Benched the Scalper: ${pct(S.return_pct, 0)} after fees.` + (vetoed.length ? ` Also vetoing ${vetoed.length} hourly setups.` : "") },
+  { who: "Risk", job: "Sizes every bet", c: "#3ee08f", h: "#222", s: "#a86b45",
+    say: holds.length ? holds.map((r) => `${r.name.split(" ")[0]} ${(r.weight * 100).toFixed(0)}%`).join(" · ") + ` · cash ${cashPct.toFixed(0)}%` : "All cash: nothing is trending up." },
+  { who: "Executor", job: "Places the trades", c: "#ff8fb1", h: "#3a2410", s: "#f1c29b",
+    say: P.open.length ? "Holding " + P.open.map((o) => `${NAMES[o.symbol].split(" ")[0]} since ${fmtDate(o.since).slice(0, -5)}`).join(", ") : "Flat. Waiting for a 70." },
+  { who: "Reporter", job: "Briefs you", c: "#ff9f5a", h: "#0d0d0d", s: "#7a4a2c",
+    say: "Morning brief 07:00, evening report 21:00." },
+];
+const sprites = [];
+AGENTS.forEach((a) => {
+  const d = el("div", "desk");
+  const cv = document.createElement("canvas"); cv.setAttribute("role", "img"); cv.setAttribute("aria-label", a.who + " at a desk");
+  drawAgent(cv, a.c, a.h, a.s, true); sprites.push([cv, a]);
+  const who = el("div", "who", a.who); who.style.background = a.c;
+  d.append(cv, who, el("div", "job", a.job), el("div", "say", a.say));
+  $("floor").appendChild(d);
+});
+if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  let f = 0; setInterval(() => { f++; sprites.forEach(([cv, a], i) => drawAgent(cv, a.c, a.h, a.s, (f + i) % 3 !== 0)); }, 700);
+}
+$("floor-note").textContent = holds.length ? `Holding ${holds.map((r) => r.name).join(" and ")}. Everything else is in cash.` : "All in cash today.";
+
+/* markets */
+(() => {
+  const t = $("mk");
+  t.innerHTML = "<thead><tr><th>Market</th><th class='r'>Price</th><th>Trend score</th><th>Trend Rider</th><th class='r'>Share of account</th><th class='r'>Scalper (hourly)</th></tr></thead>";
+  const tb = el("tbody");
+  D.trend_now.forEach((r) => {
+    const tr = el("tr");
+    const a = el("td"); a.append(el("span", "nm", r.name), el("span", "sy", r.symbol)); tr.append(a);
+    tr.append(el("td", "r num", usd(r.price)));
+    const m = el("td"); const mm = el("div", "meter"); const fill = el("i"); const sc = r.score || 0;
+    fill.style.width = sc + "%"; fill.style.background = sc >= 70 ? "var(--win)" : sc >= 40 ? "var(--warn)" : "var(--loss)";
+    mm.append(fill); const wrap = el("div"); wrap.style.cssText = "display:flex;align-items:center;gap:10px";
+    wrap.append(mm, el("span", "num", r.score == null ? "—" : String(Math.round(sc)))); m.append(wrap); tr.append(m);
+    const v = el("td"); v.append(el("span", "pill " + (r.weight > 0 ? "hold" : r.veto.length ? "veto" : "out"), r.weight > 0 ? "HOLD" : r.veto.length ? "VETOED" : "STAY OUT")); tr.append(v);
+    tr.append(el("td", "r num", r.weight > 0 ? (r.weight * 100).toFixed(1) + "%" : "—"));
+    const s = D.scalper_now.find((x) => x.symbol === r.symbol);
+    const sc2 = el("td", "r num"); sc2.textContent = s && s.score != null ? Math.round(s.score) + "/100" : "—";
+    if (s && s.veto.length) sc2.title = s.veto.join("; ");
+    tr.append(sc2); tb.append(tr);
+  });
+  t.append(tb);
+})();
+
+/* calendar */
+const SRC = {
+  bt: Object.fromEntries(T.calendar.map((c) => [c.date, c])),
+  pp: Object.fromEntries((P.calendar || []).map((c) => [c.date, c])),
+};
+let src = "bt";
+const months = (m) => Object.keys(m).map((d) => d.slice(0, 7));
+let ym = T.calendar[T.calendar.length - 1].date.slice(0, 7);
+function drawCal() {
+  const map = SRC[src];
+  const keys = [...new Set(months(map))].sort();
+  if (!keys.length) { $("cal").replaceChildren(el("p", "note", "The paper account's first full day will appear here after tonight's run.")); $("cal-title").textContent = ""; $("cal-total").textContent = ""; return; }
+  if (!keys.includes(ym)) ym = keys[keys.length - 1];
+  $("prev").disabled = ym === keys[0]; $("next").disabled = ym === keys[keys.length - 1];
+  const [y, m] = ym.split("-").map(Number);
+  $("cal-title").textContent = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+  const grid = $("cal"); grid.replaceChildren();
+  ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach((d) => grid.append(el("div", "dow", d)));
+  const first = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
+  for (let i = 0; i < first; i++) grid.append(el("div", "cell blank"));
+  const n = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  let tot = 0, tc = 0;
+  for (let d = 1; d <= n; d++) {
+    const key = `${ym}-${String(d).padStart(2, "0")}`; const c = map[key];
+    const cell = el("div", "cell" + (c ? (c.pnl > 0.005 ? " up" : c.pnl < -0.005 ? " dn-day" : "") : ""));
+    cell.append(el("span", "dn", String(d)));
+    if (c) { tot += c.pnl; tc += c.closed; cell.append(el("span", "pn " + cls(c.pnl), Math.abs(c.pnl) < 0.005 ? "$0" : sgnUsd(c.pnl))); cell.append(el("span", "tc", c.closed ? c.closed + (c.closed > 1 ? " trades" : " trade") : "")); }
+    grid.append(cell);
+  }
+  $("cal-total").innerHTML = ""; const s = el("span", cls(tot), sgnUsd(tot)); $("cal-total").append("Month ", s, ` · ${tc} closed`);
+}
+const step = (k) => { const keys = [...new Set(months(SRC[src]))].sort(); const i = keys.indexOf(ym) + k; if (i >= 0 && i < keys.length) { ym = keys[i]; drawCal(); } };
+$("prev").onclick = () => step(-1); $("next").onclick = () => step(1);
+const setSrc = (s) => { src = s; $("src-bt").setAttribute("aria-pressed", s === "bt"); $("src-pp").setAttribute("aria-pressed", s === "pp"); ym = "9999"; drawCal(); };
+$("src-bt").onclick = () => setSrc("bt"); $("src-pp").onclick = () => setSrc("pp");
+drawCal();
+
+/* equity chart (SVG, one scale for marks and ticks) */
+let logScale = true;
+function drawEq() {
+  const host = $("eq"); const W = Math.max(320, host.clientWidth || 900), H = Math.round(Math.min(380, Math.max(240, W * 0.42)));
+  const pad = { l: 64, r: 16, t: 12, b: 28 };
+  const rows = T.equity; const n = rows.length;
+  const vals = rows.flatMap((r) => [r[1], r[2]]);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const f = logScale ? Math.log10 : (x) => x;
+  const y = (v) => pad.t + (H - pad.t - pad.b) * (1 - (f(v) - f(lo)) / (f(hi) - f(lo)));
+  const x = (i) => pad.l + (W - pad.l - pad.r) * (i / (n - 1));
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", `Trend Rider grew $10,000 to ${usd(TS.end, 0)}; holding all five grew it to ${usd(rows[n - 1][2], 0)}.`);
+  const add = (tag, attrs, text) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text) e.textContent = text; svg.appendChild(e); return e; };
+  const ticks = logScale ? [5000, 10000, 20000, 50000, 100000, 200000].filter((t) => t >= lo * 0.98 && t <= hi * 1.02)
+    : Array.from({ length: 6 }, (_, i) => lo + (hi - lo) * i / 5).map((t) => Math.round(t / 1000) * 1000);
+  ticks.forEach((t) => { add("line", { x1: pad.l, x2: W - pad.r, y1: y(t), y2: y(t), stroke: "#2e2a5c", "stroke-width": 1 }); add("text", { x: pad.l - 8, y: y(t) + 4, "text-anchor": "end", fill: "#6f6ba3", "font-size": 11, "font-family": "IBM Plex Mono, monospace" }, "$" + (t >= 1000 ? (t / 1000).toLocaleString() + "k" : t)); });
+  let lastY = "";
+  rows.forEach((r, i) => { const yr = r[0].slice(0, 4); if (yr !== lastY && r[0].slice(5) <= "01-10") { add("text", { x: x(i), y: H - 8, "text-anchor": "middle", fill: "#6f6ba3", "font-size": 11, "font-family": "IBM Plex Mono, monospace" }, yr); } lastY = yr; });
+  const path = (k) => rows.map((r, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(r[k]).toFixed(1)).join("");
+  add("path", { d: path(1) + `L${x(n - 1)} ${H - pad.b}L${x(0)} ${H - pad.b}Z`, fill: "rgba(124,240,255,.08)", stroke: "none" });
+  add("path", { d: path(2), fill: "none", stroke: "#6f6ba3", "stroke-width": 1.5 });
+  add("path", { d: path(1), fill: "none", stroke: "#7cf0ff", "stroke-width": 2 });
+  add("circle", { cx: x(n - 1), cy: y(rows[n - 1][1]), r: 4, fill: "#7cf0ff" });
+  add("circle", { cx: x(n - 1), cy: y(rows[n - 1][2]), r: 3, fill: "#a9a6d6" });
+  host.replaceChildren(svg);
+}
+drawEq();
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawEq, 150); });
+const setScale = (l) => { logScale = l; $("sc-log").setAttribute("aria-pressed", l); $("sc-lin").setAttribute("aria-pressed", !l); drawEq(); };
+$("sc-log").onclick = () => setScale(true); $("sc-lin").onclick = () => setScale(false);
+Object.entries(TS.by_year).forEach(([yr, v]) => {
+  const b = el("div", "yr"); b.append(el("b", "", yr));
+  const s1 = el("span", cls(v.bot), "Bot " + pct(v.bot, 0)); const s2 = el("span", "", "Hold " + pct(v.hold, 0)); s2.style.color = "var(--ink-3)";
+  b.append(s1, s2); $("years").append(b);
+});
+
+/* leaderboard */
+const strat = (name, state, stateCls, blurb, rows, on) => {
+  const c = el("article", "strat " + on); const h = el("header"); h.append(el("h3", "", name), el("span", "pill " + stateCls, state)); c.append(h, el("p", "", blurb));
+  const dl = el("dl"); rows.forEach(([k, v, vc]) => { dl.append(el("dt", "", k)); dl.append(el("dd", vc || "", v)); }); c.append(dl); $("board").append(c);
+};
+strat("Trend Rider", "LIVE ON PAPER", "hold", "Daily bars. Holds a market while it trends up, sized so each carries similar risk, and goes to cash when the trend breaks.", [
+  ["Tested", `${fmtDate(TS.from)} to ${fmtDate(TS.to)}`], ["Return", pct(TS.return_pct, 0), cls(TS.return_pct)], ["Worst drop", "−" + TS.max_drawdown_pct.toFixed(1) + "%"],
+  ["Trades", String(TS.trades)], ["Won", TS.win_rate_pct.toFixed(0) + "%"], ["Profit factor", TS.profit_factor.toFixed(2)], ["Average time in the market", TS.avg_exposure_pct.toFixed(0) + "%"]], "on");
+strat("Scalper", "BENCHED", "wait", "Hourly bars. The stack from the videos: EMA 50/200, RSI, Aroon, volume and momentum, scored 0 to 100, stop and target on every trade.", [
+  ["Tested", `${fmtDate(S.from)} to ${fmtDate(S.to)}`], ["Return", pct(S.return_pct, 0), cls(S.return_pct)], ["Worst drop", "−" + S.max_drawdown_pct.toFixed(1) + "%"],
+  ["Trades", String(S.trades)], ["Won", S.win_rate_pct.toFixed(0) + "%"], ["Profit factor", S.profit_factor.toFixed(2)], ["Holding all five, same dates", pct(S.hold_return_pct, 0)]], "off");
+strat("Just holding", "BENCHMARK", "out", "Equal money in all five, rebalanced daily, never sold. No skill, and the bar every bot has to clear.", [
+  ["Tested", `${fmtDate(TS.from)} to ${fmtDate(TS.to)}`], ["Return", pct(TS.hold_return_pct, 0), cls(TS.hold_return_pct)], ["Worst drop", "−" + TS.hold_max_drawdown_pct.toFixed(1) + "%"],
+  ["Sharpe ratio", TS.hold_sharpe.toFixed(2) + " (bot " + TS.sharpe.toFixed(2) + ")"]], "");
+
+/* trades */
+(() => {
+  const t = $("trades");
+  t.innerHTML = "<thead><tr><th>Market</th><th>In</th><th>Out</th><th class='r'>Entry</th><th class='r'>Exit</th><th class='r'>Move</th><th class='r'>P&amp;L</th><th class='r'>Score in</th></tr></thead>";
+  const tb = el("tbody");
+  T.trades.slice(-25).reverse().forEach((r) => {
+    const tr = el("tr");
+    tr.append(el("td", "", NAMES[r.symbol]), el("td", "num", fmtDate(r.entry_date)), el("td", "num", fmtDate(r.exit_date)),
+      el("td", "r num", usd(r.entry)), el("td", "r num", usd(r.exit)), el("td", "r num " + cls(r.pct), pct(r.pct)),
+      el("td", "r num " + cls(r.pnl), sgnUsd(r.pnl)), el("td", "r num", String(Math.round(r.score))));
+    tb.append(tr);
+  });
+  t.append(tb);
+})();
+
+/* rules */
+[
+  `Data: Yahoo Finance's free daily and hourly prices, which are unofficial and can lag. Bitcoin's daily bar for today is still forming until midnight UTC.`,
+  `Fees on every buy and sell: ${D.markets.map((m) => m.name + " " + m.fee_pct.toFixed(2) + "%").join(", ")}.`,
+  `No look-ahead: the bot decides at a close and its trade earns from the next bar. The rules were fixed before the first backtest and were not tuned on it.`,
+  `Long or cash only: no shorting, no leverage, never more than 100% of the account in the market and at most ${(D.trend_rules.max_weight * 100).toFixed(0)}% in one.`,
+  `The paper account is the bot's own ledger, started ${fmtDate(P.since)}. No real money is involved, and nothing here sends orders to a broker.`,
+  `A backtest is history, not a forecast, and this page is not financial advice. Holding made more than the bot in rising years; the bot's edge is smaller drops.`,
+].forEach((t) => $("rules").append(el("li", "", t)));
+</script>
