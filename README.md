@@ -83,6 +83,7 @@ the best of them shared.
 | `/trader-regime` | Market-Type Brain | Works out whether the market is in a crash, bear, neutral, bull or euphoria phase from past data only, and shrinks or blocks new buys to match. |
 | `/trader-validate` | The Gauntlet | Walk-forward tests on up to 15 years of daily data with five pass/fail filters and three baselines; only what passes gets traded automatically. |
 | `/trader-auto` | Auto Paper Runner | Once a day it runs the validated strategy, sells what no longer qualifies and sends bracket entries trader-risk passed. Paper only, hard-coded; a journal of every run. |
+| `/trader-bot` | Bot HQ | A team of agents (Scout, Scorer, Skeptic, Risk, Executor, Reporter) running two desks on Bitcoin, Nasdaq, S&P 500, gold and oil: the daily Trend Rider (live on paper) and the hourly Scalper (benched: it lost after fees). Backtests, a paper account and morning and evening reports. |
 
 `/trader-risk` also gained account circuit breakers (2% day: half size, 3%
 day: no new entries, 5% week: half size, 10% from peak: halt until you delete
