@@ -181,6 +181,20 @@ def show(state):
     return "\n".join(lines)
 
 
+def rows(state):
+    """Flat rows for the dashboard: one per trading day."""
+    out = []
+    for d in state["days"]:
+        nxt = lambda k: ", ".join("%s %.0f%%" % (s, w * 100) for s, w in d[k]["next"].items()) or "cash"
+        out.append({"date": d["date"], "day": d["day"], "regime": d["regime"],
+                    "safe": d["safe"]["gbp"], "safe_ret": d["safe"]["ret_pct"],
+                    "all_in": d["all_in"]["gbp"], "all_in_ret": d["all_in"]["ret_pct"],
+                    "spy_hold": d["spy_hold"]["gbp"], "spy_ret": d["spy_hold"]["ret_pct"],
+                    "target_1y": d["target_1y"], "target_8m": d["target_8m"],
+                    "safe_next": nxt("safe"), "all_in_next": nxt("all_in")})
+    return out
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="The £200 race (paper simulation).")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -188,6 +202,8 @@ def main(argv=None):
     s.add_argument("--date", required=True)
     sub.add_parser("step")
     sub.add_parser("show")
+    e = sub.add_parser("export", help="write the dashboard's rows file")
+    e.add_argument("--out", default=os.path.join(HERE, "race-rows.json"))
     for p in sub.choices.values():
         p.add_argument("--state", default=STATE_PATH)
     a = ap.parse_args(argv)
@@ -199,6 +215,12 @@ def main(argv=None):
         else:
             with open(a.state, encoding="utf-8") as fh:
                 st = json.load(fh)
+            if a.cmd == "export":
+                with open(a.out, "w", encoding="utf-8") as fh:
+                    json.dump({"rows": rows(st)}, fh, indent=1)
+                    fh.write("\n")
+                print("wrote %d rows to %s" % (len(st["days"]), a.out))
+                return 0
             if a.cmd == "step":
                 st, done = step(st, fetch_all())
                 print("advanced %d day(s): %s" % (len(done), ", ".join(done) or "none (no new close yet)"))

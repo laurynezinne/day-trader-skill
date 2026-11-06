@@ -1,0 +1,19 @@
+{
+ "rows": [
+  {
+   "date": "2026-11-05",
+   "day": 0,
+   "regime": "bear",
+   "safe": 199.99,
+   "safe_ret": 0.0,
+   "all_in": 199.9,
+   "all_in_ret": 0.0,
+   "spy_hold": 199.9,
+   "spy_ret": 0.0,
+   "target_1y": 200.0,
+   "target_8m": 200.0,
+   "safe_next": "NVDA 10%",
+   "all_in_next": "UPRO 100%"
+  }
+ ]
+}
