@@ -1,23 +1,23 @@
 {
  "start_date": "2026-11-05",
- "last_date": "2026-11-05",
+ "last_date": "2026-11-06",
  "start_gbp": 200.0,
  "regime": "bear",
  "bots": {
   "safe": {
-   "gbp": 199.99,
+   "gbp": 200.5448,
    "weights": {
     "NVDA": 0.1
    }
   },
   "all_in": {
-   "gbp": 199.9,
+   "gbp": 201.3712,
    "weights": {
-    "UPRO": 1.0
+    "TNA": 1.0
    }
   },
   "spy_hold": {
-   "gbp": 199.9,
+   "gbp": 200.5245,
    "weights": {
     "SPY": 1.0
    }
@@ -51,6 +51,34 @@
    },
    "target_1y": 200.0,
    "target_8m": 200.0
+  },
+  {
+   "date": "2026-11-06",
+   "day": 1,
+   "regime": "bear",
+   "safe": {
+    "gbp": 200.54,
+    "ret_pct": 0.28,
+    "next": {
+     "NVDA": 0.1
+    }
+   },
+   "all_in": {
+    "gbp": 201.37,
+    "ret_pct": 0.84,
+    "next": {
+     "TNA": 1.0
+    }
+   },
+   "spy_hold": {
+    "gbp": 200.52,
+    "ret_pct": 0.31,
+    "next": {
+     "SPY": 1.0
+    }
+   },
+   "target_1y": 206.88,
+   "target_8m": 210.0
   }
  ]
 }

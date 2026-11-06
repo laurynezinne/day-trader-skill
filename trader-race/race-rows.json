@@ -14,6 +14,21 @@
    "target_8m": 200.0,
    "safe_next": "NVDA 10%",
    "all_in_next": "UPRO 100%"
+  },
+  {
+   "date": "2026-11-06",
+   "day": 1,
+   "regime": "bear",
+   "safe": 200.54,
+   "safe_ret": 0.28,
+   "all_in": 201.37,
+   "all_in_ret": 0.84,
+   "spy_hold": 200.52,
+   "spy_ret": 0.31,
+   "target_1y": 206.88,
+   "target_8m": 210.0,
+   "safe_next": "NVDA 10%",
+   "all_in_next": "TNA 100%"
   }
  ]
 }
