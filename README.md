@@ -83,6 +83,7 @@ the best of them shared.
 | `/trader-regime` | Market-Type Brain | Works out whether the market is in a crash, bear, neutral, bull or euphoria phase from past data only, and shrinks or blocks new buys to match. |
 | `/trader-validate` | The Gauntlet | Walk-forward tests on up to 15 years of daily data with five pass/fail filters and three baselines; only what passes gets traded automatically. |
 | `/trader-auto` | Auto Paper Runner | Once a day it runs the validated strategy, sells what no longer qualifies and sends bracket entries trader-risk passed. Paper only, hard-coded; a journal of every run. |
+| `/trader-race` | The £200 Race | A paper simulation from real closes: a safe bot and an all-in 3x-ETF bot each compound £200 daily against the £1M-in-a-year line and SPY. |
 
 `/trader-risk` also gained account circuit breakers (2% day: half size, 3%
 day: no new entries, 5% week: half size, 10% from peak: halt until you delete
