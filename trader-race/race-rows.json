@@ -29,6 +29,51 @@
    "target_8m": 210.0,
    "safe_next": "NVDA 10%",
    "all_in_next": "TNA 100%"
+  },
+  {
+   "date": "2026-11-09",
+   "day": 2,
+   "regime": "crash",
+   "safe": 199.68,
+   "safe_ret": -0.43,
+   "all_in": 220.75,
+   "all_in_ret": 9.62,
+   "spy_hold": 205.27,
+   "spy_ret": 2.37,
+   "target_1y": 214.0,
+   "target_8m": 220.5,
+   "safe_next": "cash",
+   "all_in_next": "TNA 100%"
+  },
+  {
+   "date": "2026-11-10",
+   "day": 3,
+   "regime": "crash",
+   "safe": 199.68,
+   "safe_ret": 0,
+   "all_in": 216.0,
+   "all_in_ret": -2.05,
+   "spy_hold": 204.51,
+   "spy_ret": -0.37,
+   "target_1y": 221.36,
+   "target_8m": 231.53,
+   "safe_next": "cash",
+   "all_in_next": "SOXL 100%"
+  },
+  {
+   "date": "2026-11-11",
+   "day": 4,
+   "regime": "crash",
+   "safe": 199.68,
+   "safe_ret": 0,
+   "all_in": 254.41,
+   "all_in_ret": 17.78,
+   "spy_hold": 207.21,
+   "spy_ret": 1.32,
+   "target_1y": 228.97,
+   "target_8m": 243.1,
+   "safe_next": "cash",
+   "all_in_next": "SOXL 100%"
   }
  ]
 }

@@ -1,23 +1,21 @@
 {
  "start_date": "2026-11-05",
- "last_date": "2026-11-06",
+ "last_date": "2026-11-11",
  "start_gbp": 200.0,
- "regime": "bear",
+ "regime": "crash",
  "bots": {
   "safe": {
-   "gbp": 200.5448,
-   "weights": {
-    "NVDA": 0.1
-   }
+   "gbp": 199.6788,
+   "weights": {}
   },
   "all_in": {
-   "gbp": 201.3712,
+   "gbp": 254.4103,
    "weights": {
-    "TNA": 1.0
+    "SOXL": 1.0
    }
   },
   "spy_hold": {
-   "gbp": 200.5245,
+   "gbp": 207.2114,
    "weights": {
     "SPY": 1.0
    }
@@ -79,6 +77,84 @@
    },
    "target_1y": 206.88,
    "target_8m": 210.0
+  },
+  {
+   "date": "2026-11-09",
+   "day": 2,
+   "regime": "crash",
+   "safe": {
+    "gbp": 199.68,
+    "ret_pct": -0.43,
+    "next": {}
+   },
+   "all_in": {
+    "gbp": 220.75,
+    "ret_pct": 9.62,
+    "next": {
+     "TNA": 1.0
+    }
+   },
+   "spy_hold": {
+    "gbp": 205.27,
+    "ret_pct": 2.37,
+    "next": {
+     "SPY": 1.0
+    }
+   },
+   "target_1y": 214.0,
+   "target_8m": 220.5
+  },
+  {
+   "date": "2026-11-10",
+   "day": 3,
+   "regime": "crash",
+   "safe": {
+    "gbp": 199.68,
+    "ret_pct": 0,
+    "next": {}
+   },
+   "all_in": {
+    "gbp": 216.0,
+    "ret_pct": -2.05,
+    "next": {
+     "SOXL": 1.0
+    }
+   },
+   "spy_hold": {
+    "gbp": 204.51,
+    "ret_pct": -0.37,
+    "next": {
+     "SPY": 1.0
+    }
+   },
+   "target_1y": 221.36,
+   "target_8m": 231.53
+  },
+  {
+   "date": "2026-11-11",
+   "day": 4,
+   "regime": "crash",
+   "safe": {
+    "gbp": 199.68,
+    "ret_pct": 0,
+    "next": {}
+   },
+   "all_in": {
+    "gbp": 254.41,
+    "ret_pct": 17.78,
+    "next": {
+     "SOXL": 1.0
+    }
+   },
+   "spy_hold": {
+    "gbp": 207.21,
+    "ret_pct": 1.32,
+    "next": {
+     "SPY": 1.0
+    }
+   },
+   "target_1y": 228.97,
+   "target_8m": 243.1
   }
  ]
 }
