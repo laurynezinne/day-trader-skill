@@ -1,6 +1,6 @@
 {
  "start_date": "2026-11-05",
- "last_date": "2026-11-11",
+ "last_date": "2026-11-12",
  "start_gbp": 200.0,
  "regime": "crash",
  "bots": {
@@ -9,13 +9,13 @@
    "weights": {}
   },
   "all_in": {
-   "gbp": 254.4103,
+   "gbp": 252.4838,
    "weights": {
     "SOXL": 1.0
    }
   },
   "spy_hold": {
-   "gbp": 207.2114,
+   "gbp": 206.4778,
    "weights": {
     "SPY": 1.0
    }
@@ -155,6 +155,32 @@
    },
    "target_1y": 228.97,
    "target_8m": 243.1
+  },
+  {
+   "date": "2026-11-12",
+   "day": 5,
+   "regime": "crash",
+   "safe": {
+    "gbp": 199.68,
+    "ret_pct": 0,
+    "next": {}
+   },
+   "all_in": {
+    "gbp": 252.48,
+    "ret_pct": -0.76,
+    "next": {
+     "SOXL": 1.0
+    }
+   },
+   "spy_hold": {
+    "gbp": 206.48,
+    "ret_pct": -0.35,
+    "next": {
+     "SPY": 1.0
+    }
+   },
+   "target_1y": 236.85,
+   "target_8m": 255.26
   }
  ]
 }

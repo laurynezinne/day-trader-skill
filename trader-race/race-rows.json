@@ -74,6 +74,21 @@
    "target_8m": 243.1,
    "safe_next": "cash",
    "all_in_next": "SOXL 100%"
+  },
+  {
+   "date": "2026-11-12",
+   "day": 5,
+   "regime": "crash",
+   "safe": 199.68,
+   "safe_ret": 0,
+   "all_in": 252.48,
+   "all_in_ret": -0.76,
+   "spy_hold": 206.48,
+   "spy_ret": -0.35,
+   "target_1y": 236.85,
+   "target_8m": 255.26,
+   "safe_next": "cash",
+   "all_in_next": "SOXL 100%"
   }
  ]
 }
